@@ -1,0 +1,189 @@
+#!/bin/bash
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Contributors:
+#   Antti Kaihola
+#   Junio Kimanen
+
+# Changelog:
+#   2008-11-23 Antti Kaihola:
+#     First bash version based on the Windows .cmd by Junio Kimanen
+
+banner() {
+    if [[ "$BANNER_SHOWN" != "true" ]]; then
+	# $BANNER_SHOWN must be set true after printing the banner
+	echo ailbibak-push  version 0.1
+	echo Copyright 2008 by Antti Kaihola and Junio Kimanen.
+	echo Web site: http://trac.ambitone.com/ambitools/wiki/ailbibak
+	echo 
+	echo ailbibak comes with ABSOLUTELY NO WARRANTY.  This is free software, and you
+	echo are welcome to redistribute it under certain conditions.  See the GNU
+	echo General Public Licence for details.
+	echo 
+	echo ailbibak is a suite of backup scripts for maintaining versioned 
+	echo backups using the rsync utility
+	echo
+    fi
+    BANNER_SHOWN=true
+}
+
+usage() {
+    banner
+    echo "Usage: ailbibak-push [-h] [--help] [config-file-path]"
+    echo "Default config-file-path: ./ailbibak.conf"
+    exit 1
+}
+
+ask_create() {
+    [ -e $1 ] && return 1  # configuration file exists
+    # file missing, ask to create
+    banner
+    echo The $2 file "$1" was not found.
+    read -p "Do you want to have a sample $2 file created (y/N)?"
+    [ "$REPLY" != "y" ] && exit 0
+    return 0
+}
+    
+created() {
+    echo
+    echo A default $1 file \($2\) has been created.
+    FILES_CREATED=true
+}
+
+create_config() {
+    # generate a default settings file
+    CONFIGDIR=$(dirname $CONFIGFILE)
+    EXCLUDES=$CONFIGDIR/excludes.txt
+    mkdir -p $CONFIGDIR
+    cat >$CONFIGFILE <<EOF
+# configuration file for ailbibak-push
+
+## SOURCE: Local folder to backup, with trailing slash, eg. /home/meikalainen/ or /Documents\ and\ Settings/meikalainen
+SOURCE=$PWD/
+
+## DESTINATION: rsync destination.
+## Examples: host.mydomain.com:
+##           username@host.mydomain.com:/backup
+## Note: local destinations don't work with ailbibak. If you want to
+## back up to the local machine, you can run an SSH server and connect
+## through that.
+DESTINATION=localhost:backup
+
+## EXCLUDES: the path to the rsync excludes file (defines which files to exclude and include)
+EXCLUDES=$EXCLUDES
+
+## MESSAGE_PATH: the path to the file which holds the message for each backup revision
+MESSAGE_PATH=$CONFIGDIR/message.txt
+EOF
+    created configuration "$CONFIGFILE"
+}
+
+create_excludes() {
+    # generate a default excludes file
+    mkdir -p $(dirname $EXCLUDES)
+    cat >$EXCLUDES <<EOF
+- *~
+- *.bak
++ .ailbibak
++ .ailbibak/*.conf
++ .ailbibak/*.txt
+- *
+EOF
+    created excludes "$EXCLUDES"
+}
+
+config_error () {
+    echo Incomplete configuration in $CONFIGFILE:
+    echo The setting \"$1\" is missing or has an empty value.
+    shift
+    echo Cannot determine the "$@".
+    exit 2
+}
+
+# Main program #########################################################
+
+# parse arguments
+TEMP=$(getopt -o h:m: -l help:message: -n 'ailbibak-push' -- "$@")
+[ $? != 0 ] && usage
+eval set -- "$TEMP"
+while test "X$1" != "X--"; do
+  case "$1" in
+    -h|--help) usage ;;
+    -m|--message) MESSAGE=$2; shift 2;;
+    *) usage ;;
+  esac
+done
+shift
+if [[ "$1" == "" ]]; then
+    # use default configuration file path
+    CONFIGFILE=$PWD/.ailbibak/ailbibak.conf
+else
+    # configuration file specified on the command line
+    CONFIGFILE=$1 ; shift
+fi
+
+# extra arguments on the command line?
+[ "$1" != "" ] && usage
+
+[[ -d $CONFIGFILE ]] && CONFIGFILE="$CONFIGFILE"/.ailbibak/ailbibak.conf
+
+# if the configuration file is missing, offer to create a sample
+# configuration
+ask_create "$CONFIGFILE" configuration && create_config
+
+# read configuration
+echo Using configuration file "$CONFIGFILE"
+echo
+. $CONFIGFILE
+
+# check configuration for missing settings
+[[ "$SOURCE" == "" ]] && config_error SOURCE source directory
+[[ "$DESTINATION" == "" ]] && config_error DESTINATION backup destination
+[[ "$EXCLUDES" == "" ]] && config_error EXCLUDES path for the excludes file
+if [ "$MESSAGE" != "" ]; then
+    if [ "$MESSAGE_PATH" != "" ]; then
+	mkdir -p $(dirname $MESSAGE_PATH)
+	echo $(date "+%Y-%m-%d %H:%M:%S") >$MESSAGE_PATH
+	echo "$MESSAGE" >>$MESSAGE_PATH
+    else
+	config_error MESSAGE_PATH path for the message file
+    fi
+fi
+
+# if the excludes file is missing, offer to create a sample file
+ask_create "$EXCLUDES" excludes && create_excludes
+
+if [[ "$FILES_CREATED" == "true" ]]; then
+    echo Review and edit the created file\(s\), then run ailbibak-push again.
+    exit 0
+fi
+
+[[ "${DESTINATION%[:/]}" == "$DESTINATION" ]] && DESTINATION="$DESTINATION"/
+
+rsync -aPHxv --rsync-path='
+  R() { 
+    N=${!#}
+    C=${@:(-3):1}
+    D=$(date "+%Y-%m-%d_%H-%M-%S") &&
+    mkdir -p $N &&
+    rsync "$@" &&
+    cd $N &&
+    rm -f $C &&
+    cd .. &&
+    mv $(basename $N) $D &&
+    cd $D &&
+    ln -s $PWD $C
+  }
+  R' --link-dest=../current --delete --exclude-from=$EXCLUDES $SOURCE ${DESTINATION}new
