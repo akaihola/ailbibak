@@ -21,6 +21,7 @@
 #   2008-11-23 Antti Kaihola:
 #     0.1 First bash version based on the Windows .cmd by Junio Kimanen
 #     0.2 Fixes handling of / as source directory in created configuration
+#     0.2.1 Removes the -x argument to rsync (don't cross fs boundary)
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
@@ -173,7 +174,7 @@ fi
 
 [[ "${DESTINATION%[:/]}" == "$DESTINATION" ]] && DESTINATION="$DESTINATION"/
 
-rsync -aPHxv --rsync-path='
+rsync -aPHv --rsync-path='
   R() { 
     N=${!#}
     C=${@:(-3):1}
