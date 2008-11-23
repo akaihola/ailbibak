@@ -19,12 +19,13 @@
 
 # Changelog:
 #   2008-11-23 Antti Kaihola:
-#     First bash version based on the Windows .cmd by Junio Kimanen
+#     0.1 First bash version based on the Windows .cmd by Junio Kimanen
+#     0.2 Fixes handling of / as source directory in created configuration
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
 	# $BANNER_SHOWN must be set true after printing the banner
-	echo ailbibak-push  version 0.1
+	echo ailbibak-push  version 0.2
 	echo Copyright 2008 by Antti Kaihola and Junio Kimanen.
 	echo Web site: http://trac.ambitone.com/ambitools/wiki/ailbibak
 	echo 
@@ -71,7 +72,7 @@ create_config() {
 # configuration file for ailbibak-push
 
 ## SOURCE: Local folder to backup, with trailing slash, eg. /home/meikalainen/ or /Documents\ and\ Settings/meikalainen
-SOURCE=$PWD/
+SOURCE=${PWD%/}/
 
 ## DESTINATION: rsync destination.
 ## Examples: host.mydomain.com:
@@ -128,7 +129,7 @@ done
 shift
 if [[ "$1" == "" ]]; then
     # use default configuration file path
-    CONFIGFILE=$PWD/.ailbibak/ailbibak.conf
+    CONFIGFILE=${PWD%/}/.ailbibak/ailbibak.conf
 else
     # configuration file specified on the command line
     CONFIGFILE=$1 ; shift
