@@ -20,8 +20,9 @@
 # Changelog:
 #   2008-11-23 Antti Kaihola:
 #     0.1 First bash version based on the Windows .cmd by Junio Kimanen
-#     0.2 Fixes handling of / as source directory in created configuration
-#     0.2.1 Removes the -x argument to rsync (don't cross fs boundary)
+#     0.2 Handle / correctly as source directory in created configuration
+#     0.2.1 No -x argument to rsync (don't cross fs boundary)
+#     0.2.2 Add timestamp as message even if message omitted
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
@@ -154,14 +155,12 @@ echo
 [[ "$SOURCE" == "" ]] && config_error SOURCE source directory
 [[ "$DESTINATION" == "" ]] && config_error DESTINATION backup destination
 [[ "$EXCLUDES" == "" ]] && config_error EXCLUDES path for the excludes file
-if [ "$MESSAGE" != "" ]; then
-    if [ "$MESSAGE_PATH" != "" ]; then
-	mkdir -p $(dirname $MESSAGE_PATH)
-	echo $(date "+%Y-%m-%d %H:%M:%S") >$MESSAGE_PATH
-	echo "$MESSAGE" >>$MESSAGE_PATH
-    else
-	config_error MESSAGE_PATH path for the message file
-    fi
+if [ "$MESSAGE_PATH" != "" ]; then
+    mkdir -p $(dirname $MESSAGE_PATH)
+    echo $(date "+%Y-%m-%d %H:%M:%S") >$MESSAGE_PATH
+    echo "$MESSAGE" >>$MESSAGE_PATH
+else
+    [[ "$MESSAGE" != "" ]] && config_error MESSAGE_PATH path for the message file
 fi
 
 # if the excludes file is missing, offer to create a sample file
