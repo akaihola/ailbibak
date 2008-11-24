@@ -23,6 +23,8 @@
 #     0.2 Handle / correctly as source directory in created configuration
 #     0.2.1 No -x argument to rsync (don't cross fs boundary)
 #     0.2.2 Add timestamp as message even if message omitted
+#   2008-11-24 Antti Kaihola:
+#     0.2.3 -l argument to rsync (copy symlinks)
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
@@ -173,7 +175,7 @@ fi
 
 [[ "${DESTINATION%[:/]}" == "$DESTINATION" ]] && DESTINATION="$DESTINATION"/
 
-rsync -aPHv --rsync-path='
+rsync -aPHlv --rsync-path='
   R() { 
     N=${!#}
     C=${@:(-3):1}
