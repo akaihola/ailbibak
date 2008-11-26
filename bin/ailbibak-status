@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Contributors:
+#   Antti Kaihola
+
+# Changelog:
+#   2008-11-26 Antti Kaihola:
+#     0.1 Initial version
+
+banner() {
+    if [[ "$BANNER_SHOWN" != "true" ]]; then
+	# $BANNER_SHOWN must be set true after printing the banner
+	echo ailbibak-status  version 0.1
+	echo Copyright 2008 by Antti Kaihola
+	echo Web site: http://trac.ambitone.com/ambitools/wiki/ailbibak
+	echo 
+	echo ailbibak comes with ABSOLUTELY NO WARRANTY.  This is free software, and you
+	echo are welcome to redistribute it under certain conditions.  See the GNU
+	echo General Public Licence for details.
+	echo 
+	echo ailbibak is a suite of backup scripts for maintaining versioned 
+	echo backups using the rsync utility
+	echo
+    fi
+    BANNER_SHOWN=true
+}
+
+usage() {
+    banner
+    echo "Usage: ailbibak-status [-h] [--help] [config-file-path]"
+    echo "Default config-file-path: ./ailbibak.conf"
+    exit 1
+}
+
+config_error () {
+    echo Incomplete configuration in $CONFIGFILE: >&2
+    echo The setting \"$1\" is missing or has an empty value. >&2
+    shift
+    echo Cannot determine the "$@". >&2
+    exit 2
+}
+
+# Main program #########################################################
+
+# parse arguments
+TEMP=$(getopt -o h -l help -n 'ailbibak-status' -- "$@")
+[ $? != 0 ] && usage
+eval set -- "$TEMP"
+while test "X$1" != "X--"; do
+  case "$1" in
+    -h|--help) usage ;;
+    *) usage ;;
+  esac
+done
+shift
+if [[ "$1" == "" ]]; then
+    # use default configuration file path
+    CONFIGFILE=${PWD%/}/.ailbibak/ailbibak.conf
+else
+    # configuration file specified on the command line
+    CONFIGFILE=$1 ; shift
+fi
+
+# extra arguments on the command line?
+[ "$1" != "" ] && usage
+
+[[ -d $CONFIGFILE ]] && CONFIGFILE="$CONFIGFILE"/.ailbibak/ailbibak.conf
+
+# read configuration
+echo Using configuration file "$CONFIGFILE" >&2
+echo >&2
+. $CONFIGFILE
+
+# check configuration for missing settings
+[[ "$SOURCE" == "" ]] && config_error SOURCE source directory
+[[ "$DESTINATION" == "" ]] && config_error DESTINATION backup destination
+[[ "$EXCLUDES" == "" ]] && config_error EXCLUDES path for the excludes file
+
+[[ "${DESTINATION%[:/]}" == "$DESTINATION" ]] && DESTINATION="$DESTINATION"/
+
+rsync -anHli --delete --exclude-from=$EXCLUDES $SOURCE ${DESTINATION}current
