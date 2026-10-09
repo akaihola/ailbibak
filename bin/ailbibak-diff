@@ -19,6 +19,8 @@
 # Changelog:
 #   2008-11-26 Antti Kaihola:
 #     0.1 Initial version
+#   2026-10-09 Antti Kaihola:
+#     0.1.1 Fixed the default config-file-path in the usage text
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
@@ -44,7 +46,7 @@ banner() {
 usage() {
     banner
     echo "Usage: ailbibak-diff [-h] [--help] [config-file-path]"
-    echo "Default config-file-path: ./ailbibak.conf"
+    echo "Default config-file-path: ./.ailbibak/ailbibak.conf"
     exit 1
 }
 

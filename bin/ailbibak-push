@@ -25,6 +25,8 @@
 #     0.2.2 Add timestamp as message even if message omitted
 #   2008-11-24 Antti Kaihola:
 #     0.2.3 -l argument to rsync (copy symlinks)
+#   2026-10-09 Antti Kaihola:
+#     0.2.4 Fixed the -h, --help and --message options
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
@@ -46,8 +48,8 @@ banner() {
 
 usage() {
     banner
-    echo "Usage: ailbibak-push [-h] [--help] [config-file-path]"
-    echo "Default config-file-path: ./ailbibak.conf"
+    echo "Usage: ailbibak-push [-h] [--help] [-m message] [--message message] [config-file-path]"
+    echo "Default config-file-path: ./.ailbibak/ailbibak.conf"
     exit 1
 }
 
@@ -120,7 +122,7 @@ config_error () {
 # Main program #########################################################
 
 # parse arguments
-TEMP=$(getopt -o h:m: -l help:message: -n 'ailbibak-push' -- "$@")
+TEMP=$(getopt -o hm: -l help,message: -n 'ailbibak-push' -- "$@")
 [ $? != 0 ] && usage
 eval set -- "$TEMP"
 while test "X$1" != "X--"; do
