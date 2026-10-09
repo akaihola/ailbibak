@@ -6,6 +6,17 @@ a version history preserving remote backup script
 
 This script was inspired by the rsnapshot project.
 
+ailbibak is a suite of backup scripts for maintaining versioned
+backups using the rsync utility. It works like a simple version
+control system for a folder. Each backup is a new revision on a
+remote server, and you can store a message with it. Before backing
+up, you can list the changed files and see the differences in the
+diff format.
+
+Every backup revision is a complete copy of the folder. Files which
+haven't changed since the previous revision are hard links to it, so
+they take disk space only once.
+
 Status
 ------
 
@@ -26,38 +37,67 @@ Scripts
 -------
 
 ailbibak-push
-    Backs up the source directory to a new snapshot on the backup
-    host. With ``-m`` it stores a message with the snapshot.
+    Backs up a folder to a new backup revision on a remote server.
 
 ailbibak-status
-    Lists the files which have changed since the latest snapshot.
+    Lists the files which have changed since the latest backup.
 
 ailbibak-diff
-    Shows those changes in the diff format.
+    Compares current directories and files to the latest backup and
+    outputs the differences in the diff format.
 
 ailbibak-push.cmd
     The Windows version of ailbibak-push.
 
 ailbibak
     The first version. It copies the source, which may be on another
-    host, to a new snapshot in the current directory.
+    host, to a new backup revision in the current folder.
 
 Usage
 -----
 
-Run ailbibak-push in the directory you want to back up. The first
-time, it offers to create ``.ailbibak/ailbibak.conf`` and
-``.ailbibak/excludes.txt``. The created excludes file includes only
-the ``.ailbibak`` directory, so edit both files before you run
-ailbibak-push again.
+Run ailbibak-push in the folder you want to back up::
 
-Each snapshot is a directory named by its date and time, such as
-``backup/2026-10-09_18-05-56``. Files which haven't changed are hard
-links to the previous snapshot, and ``backup/current`` points to the
-latest snapshot.
+    $ cd /home/meikalainen/documents
+    $ ailbibak-push
 
-ailbibak never removes old snapshots. It also expects bash as the
-login shell on the backup host.
+The first time, it offers to create ``.ailbibak/ailbibak.conf`` and
+``.ailbibak/excludes.txt``. Set the rsync destination in
+``ailbibak.conf``, eg.::
+
+    DESTINATION=meikalainen@host.mydomain.com:backup/documents
+
+The created excludes file includes only the ``.ailbibak`` folder. To
+back up everything except ``*~`` and ``*.bak`` files, remove its last
+line, ``- *``.
+
+Then run ailbibak-push again. With ``-m`` you can store a message
+with the backup revision::
+
+    $ ailbibak-push -m "Budget for 2009"
+
+Later, list the files you have changed since the latest backup and
+see the differences::
+
+    $ ailbibak-status
+    $ ailbibak-diff
+
+Instead of running the scripts in the folder, you can give the
+folder or its configuration file as an argument::
+
+    $ ailbibak-push -m "Plan for 2009" /home/meikalainen/documents
+
+On the remote server, each backup revision is a folder named by its
+date and time, and ``current`` points to the latest one. The message
+is in ``.ailbibak/message.txt`` of each revision::
+
+    $ ssh meikalainen@host.mydomain.com ls backup/documents
+    2008-11-26_10-49-24
+    2008-11-27_09-15-02
+    current
+
+ailbibak never removes old backup revisions. It also expects bash as
+the login shell on the remote server.
 
 .. _rsnapshot: https://rsnapshot.org/
 .. _restic: https://restic.net/
