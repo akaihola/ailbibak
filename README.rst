@@ -99,8 +99,24 @@ is in ``.ailbibak/message.txt`` of each revision::
 ailbibak never removes old backup revisions. It also expects bash as
 the login shell on the remote server.
 
+Tests
+-----
+
+The tests run each script with bash and zsh, and use both as the
+login shell on the remote server. A fake ssh in ``tests/bin`` runs
+the remote commands locally, so they need no SSH server. Run them
+with uv_::
+
+    $ uv run --with pytest pytest
+
+The scripts don't work with zsh yet, so the zsh tests fail. To run
+only the bash tests::
+
+    $ uv run --with pytest pytest -k "not zsh"
+
 .. _rsnapshot: https://rsnapshot.org/
 .. _restic: https://restic.net/
 .. _BorgBackup: https://www.borgbackup.org/
 .. _Kopia: https://kopia.io/
 .. _btrbk: https://digint.ch/btrbk/
+.. _uv: https://docs.astral.sh/uv/
