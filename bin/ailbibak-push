@@ -27,6 +27,8 @@
 #     0.2.3 -l argument to rsync (copy symlinks)
 #   2026-10-09 Antti Kaihola:
 #     0.2.4 Fixed the -h, --help and --message options
+#   2026-10-10 Antti Kaihola:
+#     0.2.5 Work with zsh, also as the login shell on the remote server
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
@@ -58,7 +60,8 @@ ask_create() {
     # file missing, ask to create
     banner
     echo The $2 file "$1" was not found.
-    read -p "Do you want to have a sample $2 file created (y/N)?"
+    echo -n "Do you want to have a sample $2 file created (y/N)?"
+    read -r REPLY
     [ "$REPLY" != "y" ] && exit 0
     return 0
 }
@@ -179,8 +182,7 @@ fi
 
 rsync -aPHlv --rsync-path='
   R() { 
-    N=${!#}
-    C=${@:(-3):1}
+    for A; do C=$B; B=$N; N=$A; done  # N: the last argument, C: the 3rd last
     D=$(date "+%Y-%m-%d_%H-%M-%S") &&
     mkdir -p $N &&
     rsync "$@" &&
