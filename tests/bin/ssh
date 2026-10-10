@@ -1,0 +1,11 @@
+#!/bin/sh
+# A fake ssh for the tests. It runs the remote command locally with the
+# shell $AILBIBAK_REMOTE_SHELL in the folder $AILBIBAK_REMOTE_HOME, like
+# sshd runs it with the login shell in the home folder of the user.
+case "$1 $2" in
+    "-Mf "* | "-O exit") exit 0 ;;  # no master connection to open or close
+    -*) echo "fake ssh: unsupported option $1" >&2; exit 255 ;;
+esac
+shift  # the host
+cd "${AILBIBAK_REMOTE_HOME:?}" || exit 255
+HOME=$AILBIBAK_REMOTE_HOME exec "$AILBIBAK_REMOTE_SHELL" -c "$*"
