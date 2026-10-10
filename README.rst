@@ -107,12 +107,12 @@ login shell on the remote server. A fake ssh in ``tests/bin`` runs
 the remote commands locally, so they need no SSH server. Run them
 with uv_::
 
-    $ uv run --with pytest pytest
+    $ uvx pytest
 
 The scripts don't work with zsh yet, so the zsh tests fail. To run
 only the bash tests::
 
-    $ uv run --with pytest pytest -k "not zsh"
+    $ uvx pytest -k "not zsh"
 
 .. _rsnapshot: https://rsnapshot.org/
 .. _restic: https://restic.net/
