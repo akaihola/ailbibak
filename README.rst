@@ -96,8 +96,8 @@ is in ``.ailbibak/message.txt`` of each revision::
     2008-11-27_09-15-02
     current
 
-ailbibak never removes old backup revisions. It also expects bash as
-the login shell on the remote server.
+ailbibak never removes old backup revisions. The login shell on the
+remote server can be bash or zsh.
 
 Tests
 -----
@@ -108,11 +108,6 @@ the remote commands locally, so they need no SSH server. Run them
 with uv_::
 
     $ uvx pytest
-
-The scripts don't work with zsh yet, so the zsh tests fail. To run
-only the bash tests::
-
-    $ uvx pytest -k "not zsh"
 
 .. _rsnapshot: https://rsnapshot.org/
 .. _restic: https://restic.net/
