@@ -21,6 +21,8 @@
 #     0.1 Initial version
 #   2026-10-09 Antti Kaihola:
 #     0.1.1 Fixed the default config-file-path in the usage text
+#   2026-10-10 Antti Kaihola:
+#     0.1.2 Work with zsh
 
 banner() {
     if [[ "$BANNER_SHOWN" != "true" ]]; then
@@ -110,7 +112,7 @@ ssh -Mf $LOGIN sleep 3600
 # create a temporary directory
 TEMPDIR=$(ssh $LOGIN mktemp -dp $BACKUP_ROOT)
 
-if [ "$TEMPDIR" == "" ]; then
+if [ "$TEMPDIR" = "" ]; then
    echo Could not create temporary directory >&2
 else
     # synchronize into a temporary directory
